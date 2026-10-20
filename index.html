@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#111827" />
+  <title>Gesture Chords</title>
+  <link rel="stylesheet" href="style.css?v=13" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand-mark" aria-hidden="true">&#9834;</div>
+      <div><h1>Gesture Chords</h1></div>
+      <div class="audio-state" id="audioState" role="status" aria-live="polite"><span></span> Loading audio controls...</div>
+    </header>
+
+    <section class="hero">;
+      <div class="controls-panel">
+        <h2>Your hands. Your chords.</h2>
+        <div class="family-controls"><label for="familyKey">Chord family</label><select id="familyKey" aria-label="Family key"><option value="0">C</option><option value="1">C#</option><option value="2">D</option><option value="3">D#</option><option value="4">E</option><option value="5">F</option><option value="6">F#</option><option value="7">G</option><option value="8">G#</option><option value="9">A</option><option value="10">A#</option><option value="11">B</option></select><select id="familyMode" aria-label="Family scale"><option value="major">Major</option><option value="minor">Natural minor</option></select></div>
+        <button class="primary-button" id="cameraButton">Enable camera</button>
+        <p class="camera-note" id="cameraMessage">Raise to play. Curl to stop.</p>
+        <section class="song-panel" aria-label="Lyrics with chords">
+          <div class="song-heading"><div><h3 id="songTitle">Lyrics with chords</h3><small id="songArtist">Choose a song to begin</small></div><button class="record-button" id="chooseSong">Choose song</button></div>
+          <div id="songSheet" class="song-sheet" aria-live="polite"><p>Search songs or add your own chord sheet.</p></div>
+          <div class="song-pagination"><button class="record-button" id="songPrevious" aria-label="Previous lyrics page" disabled>&larr;</button><span id="songPage">0 / 0</span><button class="record-button" id="songNext" aria-label="Next lyrics page" disabled>&rarr;</button><button class="record-button" id="editSong" disabled>Edit</button></div>
+        </section>
+        <div class="recording-panel">
+          <div class="family-controls"><label for="recordingMode">Recording source</label><select id="recordingMode"><option value="system">System audio</option><option value="mic" selected>Mic + chords</option><option value="camera">Camera + mic</option></select></div>
+          <div class="recording-actions"><button type="button" class="record-button" id="recordButton">Record</button><button type="button" class="record-button" id="stopRecordButton" disabled>Stop</button><button type="button" class="record-button" id="previewRecording" hidden>Listen / watch</button><a class="save-recording" id="saveRecording" hidden>Save recording</a></div>
+          <p id="recordingStatus" role="status" aria-live="polite">Record chords, or include your microphone to sing along. Headphones help keep your voice recording clear.</p>
+        </div>
+      </div>
+
+      <div class="instrument-panel">
+        <div class="camera-frame" id="cameraFrame">
+          <video id="video" autoplay playsinline muted></video>
+          <canvas id="overlay"></canvas>
+          <video id="recordingPreview" class="recording-preview" autoplay playsinline muted hidden aria-label="Recording camera preview"></video>
+          <div class="camera-placeholder" id="placeholder">
+            <div class="hand-icon">&#9995;</div><b>Your stage is ready</b><span>Enable the camera to start</span>
+          </div>
+          <div class="camera-badge" id="trackingBadge"><span></span> Waiting for hand</div>
+        </div>
+        <div class="note-display">
+          <div><span class="eyebrow">FAMILY CHORDS</span><div class="chord-name" id="chordName">C major family</div></div>
+          <div class="note-pills" id="notePills"></div>
+        </div>
+        <div class="finger-keyboard" aria-label="Fingertip chord mapping"><div class="finger-key" data-finger="Left-0"><b>C</b><small>L Thumb</small></div><div class="finger-key" data-finger="Left-1"><b>Dm</b><small>L Index</small></div><div class="finger-key" data-finger="Left-2"><b>Em</b><small>L Middle</small></div><div class="finger-key" data-finger="Left-3"><b>F</b><small>L Ring</small></div><div class="finger-key" data-finger="Left-4"><b>G</b><small>L Little</small></div><div class="finger-key" data-finger="Right-0"><b>Am</b><small>R Thumb</small></div><div class="finger-key" data-finger="Right-1"><b>Bdim</b><small>R Index</small></div><div class="finger-key" data-finger="Right-2"><b>C</b><small>R Middle</small></div><div class="finger-key" data-finger="Right-3"><b>Dm</b><small>R Ring</small></div><div class="finger-key" data-finger="Right-4"><b>Em</b><small>R Little</small></div></div>
+        <div class="manual-controls">
+          <label for="testFinger">Test fingertip</label>
+          <select id="testFinger" aria-label="Test a family chord"></select>
+          <button class="play-button" id="playButton" aria-label="Play chord">&#9654;</button>
+        </div>
+
+      </div>
+    </section>
+  </main>
+  <dialog id="songDialog" aria-labelledby="songDialogTitle">
+    <div class="dialog-header"><b id="songDialogTitle">Choose a song</b><form method="dialog"><button class="record-button">Close</button></form></div>
+    <div class="song-search"><input id="songSearch" type="search" placeholder="Search title or artist" aria-label="Search songs"><a id="songWebSearch" class="record-button" href="https://www.ultimate-guitar.com/search.php?search_type=title&amp;value=" target="_blank" rel="noopener noreferrer">Search Ultimate Guitar</a></div>
+    <div id="songResults" class="song-results"></div>
+    <p class="song-help">Ultimate Guitar opens in a new tab. Add a text or ChordPro file to save a sheet here.</p>
+    <label class="song-file-label" for="songFile">Import &amp; save a chord sheet<input id="songFile" type="file" accept=".txt,.cho,.chordpro,.pro,text/plain"><span id="songImportStatus" role="status"></span></label>
+    <form id="songForm"><div class="song-fields"><input id="songInputTitle" aria-label="Song title" placeholder="Song title" required maxlength="120"><input id="songInputArtist" aria-label="Artist" placeholder="Artist (optional)" maxlength="120"><select id="songInputKey" aria-label="Song key"></select><select id="songInputMode" aria-label="Song scale"><option value="major">Major</option><option value="minor">Natural minor</option></select></div><label for="songInputSheet">Lyrics with chords</label><textarea id="songInputSheet" required maxlength="50000" rows="6" placeholder="[C]Your lyrics [G]here&#10;Or paste chords above the lyric lines."></textarea><div class="song-form-actions"><button class="primary-button" type="submit">Save &amp; open</button><button class="record-button" type="button" id="newSong">New song</button><span id="songNotice" role="status"></span></div></form>
+  </dialog>
+  <dialog id="playbackDialog"><div class="dialog-header"><b>Your recording</b><form method="dialog"><button class="record-button" aria-label="Close recording playback">Close</button></form></div><video id="recordingPlayer" class="recording-media" controls playsinline hidden aria-label="Play your recording"></video></dialog>
+  <script src="app.js?v=12" onerror="document.getElementById('audioState').textContent = 'Could not load app.js. Open this folder with Live Server.'"></script>
+  <script src="songs.js?v=13"></script>
+</body>
+</html>
