@@ -361,6 +361,22 @@ async function startCameraPreview(mediaStream) {
   placeholder.style.display='none';
   canvas.width=video.videoWidth || 640;canvas.height=video.videoHeight || 480;
 }
+async function listCameraDevices(){
+  const field=document.querySelector('#cameraDeviceField'),select=document.querySelector('#cameraDevice');
+  if(!navigator.mediaDevices?.enumerateDevices)return;
+  try{
+    const devices=(await navigator.mediaDevices.enumerateDevices()).filter(device=>device.kind==='videoinput');
+    const previous=select.value;select.replaceChildren();
+    const option=document.createElement('option');option.value='';option.textContent='Browser default camera';select.append(option);
+    devices.forEach((device,index)=>{const item=document.createElement('option');item.value=device.deviceId;item.textContent=device.label || 'Camera '+(index+1);select.append(item);});
+    if(devices.some(device=>device.deviceId===previous))select.value=previous;
+    field.hidden=!devices.length;
+  }catch{field.hidden=true;}
+}
+function cameraVideoConstraints(){
+  const selected=document.querySelector('#cameraDevice').value;
+  return selected?{deviceId:{exact:selected}}:{facingMode:{ideal:'user'}};
+}
 async function enableCamera() {
   let previewReady=false;
   cameraButton.disabled=true;cameraButton.textContent='Starting camera...';
@@ -371,8 +387,8 @@ async function enableCamera() {
     }
     ensureAudio().catch(reportAudioError);
     if(!stream?.getVideoTracks().some(track=>track.readyState==='live')){
-      try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'user'}},audio:false});}
-      catch(error){if(error.name!=='OverconstrainedError')throw error;stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});}
+      try{stream=await navigator.mediaDevices.getUserMedia({video:cameraVideoConstraints(),audio:false});}
+      catch(error){if(error.name!=='OverconstrainedError' || document.querySelector('#cameraDevice').value)throw error;stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});}
       stream.getVideoTracks().forEach(track=>track.addEventListener('ended',()=>{
         stopCameraSounds();video.style.display='none';placeholder.style.display='';
         cameraButton.disabled=false;cameraButton.textContent='Restart camera';
@@ -381,6 +397,7 @@ async function enableCamera() {
     }
     cameraMessage.textContent='Camera allowed. Starting preview...';
     await startCameraPreview(stream);previewReady=true;
+    document.querySelector('#cameraDeviceField').hidden=true;
     cameraMessage.textContent='Camera is on. Loading hand tracking...';
     cameraButton.textContent = 'Camera enabled';
     const { FilesetResolver, HandLandmarker } = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14');
@@ -403,7 +420,8 @@ async function enableCamera() {
     video.style.display = 'none';
     placeholder.style.display = '';
     cameraButton.disabled = false; cameraButton.textContent = 'Try camera again';
-    cameraMessage.textContent = error.name === 'NotAllowedError' ? 'Camera permission was blocked. Allow camera access in your browser settings and try again.' : error.name === 'NotFoundError' ? 'No camera was found. Connect a camera and try again.' : error.name === 'NotReadableError' ? 'Camera is busy or unavailable. Close other camera apps, then try again.' : error.name === 'AbortError' ? 'Camera startup was interrupted. Tap Try camera again.' : error.message || 'Could not start the camera. Try again.';
+    cameraMessage.textContent = error.name === 'NotAllowedError' ? 'Camera permission was blocked. Allow camera access in your browser settings and try again.' : error.name === 'NotFoundError' ? 'No camera was found. Connect a camera and try again.' : error.name === 'NotReadableError' ? 'Camera is busy or unavailable. Close other camera tabs/apps, check the webcam privacy switch, or choose another camera below and retry.' : error.name === 'OverconstrainedError' ? 'The selected camera is unavailable. Choose another camera below.' : error.name === 'AbortError' ? 'Camera startup was interrupted. Tap Try camera again.' : error.message || 'Could not start the camera. Try again.';
+    await listCameraDevices();
   }
 }
 cameraButton.addEventListener('click', enableCamera);

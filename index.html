@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101827">
   <title>Gesture Chords</title>
-  <link rel="stylesheet" href="style.css?v=26">
+  <link rel="stylesheet" href="style.css?v=28">
 </head>
 <body>
   <main class="app-shell">
@@ -16,6 +16,7 @@
         <div class="family-controls"><label for="familyKey">Chord family</label><select id="familyKey" aria-label="Family key"><option value="0">C</option><option value="1">C#</option><option value="2">D</option><option value="3">D#</option><option value="4">E</option><option value="5">F</option><option value="6">F#</option><option value="7">G</option><option value="8">G#</option><option value="9">A</option><option value="10">A#</option><option value="11">B</option></select><select id="familyMode" aria-label="Family scale"><option value="major">Major</option><option value="minor">Natural minor</option></select></div>
         <div class="camera-actions"><button class="primary-button" id="cameraButton">Enable camera</button></div>
         <p id="soundSummary" class="sound-summary">Piano / Chord</p>
+        <div class="family-controls camera-device-field" id="cameraDeviceField" hidden><label for="cameraDevice">Camera</label><select id="cameraDevice" aria-label="Camera device"><option value="">Browser default camera</option></select></div>
         <p id="cameraMessage" class="camera-note">Raise steadily to play. Curl or remove hands to stop.</p>
         <section class="recording-panel" aria-label="Recording">
           <div class="family-controls"><label for="recordingMode">Recording source</label><select id="recordingMode" aria-label="Recording source"><option value="system">System audio</option><option value="mic" selected>Mic + chords</option><option value="camera">Camera + mic</option></select></div>
@@ -53,6 +54,6 @@
     <p class="sound-help">Microphone level is active during mic or camera recording. Voice goes to the recording only.</p><button id="silenceButton" class="record-button" type="button">Stop all sounds</button>
   </dialog>
   <dialog id="playbackDialog"><div class="dialog-header"><b>Your recording</b><button class="record-button" type="button" data-close-dialog="playbackDialog">Close</button></div><video id="recordingPlayer" class="recording-media" controls playsinline hidden aria-label="Play your recording"></video></dialog>
-  <script src="app.js?v=27" onerror="document.getElementById('audioState').textContent='Could not load app.js. Refresh the page.'"></script>
+  <script src="app.js?v=28" onerror="document.getElementById('audioState').textContent='Could not load app.js. Refresh the page.'"></script>
 </body>
 </html>

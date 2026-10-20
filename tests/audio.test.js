@@ -43,6 +43,7 @@ const run = code => vm.runInContext(code,sandbox);
   const preview=element('video');preview.style={display:'none'};preview.videoWidth=1280;preview.videoHeight=720;
   preview.play=async()=>{assert.equal(preview.style.display,'block','preview must be visible before playback');assert(preview.muted);assert(preview.playsInline);};
   element('placeholder').style={};await run('startCameraPreview({})');assert.equal(element('overlay').width,1280);assert.equal(element('placeholder').style.display,'none');
+  element('cameraDevice').value='';assert.equal(run('cameraVideoConstraints().facingMode.ideal'),'user');element('cameraDevice').value='built-in';assert.equal(run('cameraVideoConstraints().deviceId.exact'),'built-in');element('cameraDevice').value='';
   await run('ensureAudio()');
   assert.equal(run('instrumentBus.gain.value'),.8);
   assert(run('instrumentMeterNode.connections.includes(audioContext.destination)'));
