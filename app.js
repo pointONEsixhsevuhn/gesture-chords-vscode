@@ -304,7 +304,7 @@ function drawHand(hand) {
   links.forEach(([a,b]) => {ctx.beginPath();ctx.moveTo(hand[a].x*w,hand[a].y*h);ctx.lineTo(hand[b].x*w,hand[b].y*h);ctx.stroke();});
   hand.forEach((p,i)=>{ctx.beginPath();ctx.arc(p.x*w,p.y*h,i===8?Math.max(7,w*.014):Math.max(3,w*.007),0,Math.PI*2);ctx.fillStyle=i===8?'#fff':'#9ce8cb';ctx.fill();});
 }
-let lastCameraFrameAt=0;
+let lastCameraFrameAt=0,trackingLoopStarted=false;
 function processFrame() {
   try {
   if (!landmarker || video.readyState < 2) { stopCameraSounds();requestAnimationFrame(processFrame); return; }
@@ -346,29 +346,53 @@ function processFrame() {
   requestAnimationFrame(processFrame);
 }
 window.addEventListener('blur', () => { if(audioContext)stopAllSounds(); });
+async function startCameraPreview(mediaStream) {
+  // Some mobile browsers will not start playback while the video is display:none.
+  video.muted=true;video.autoplay=true;video.playsInline=true;
+  video.setAttribute('playsinline','');video.setAttribute('webkit-playsinline','');
+  video.style.display='block';
+  if(video.srcObject!==mediaStream)video.srcObject=mediaStream;
+  let timeout;
+  try {
+    await Promise.race([video.play(),new Promise((_,reject)=>{
+      timeout=setTimeout(()=>reject(new Error('Camera preview did not start. Close other camera apps and tap Try camera again.')),12000);
+    })]);
+  } finally {clearTimeout(timeout);}
+  placeholder.style.display='none';
+  canvas.width=video.videoWidth || 640;canvas.height=video.videoHeight || 480;
+}
 async function enableCamera() {
-  cameraButton.disabled = true; cameraButton.textContent = 'Starting camera…';
+  let previewReady=false;
+  cameraButton.disabled=true;cameraButton.textContent='Starting camera...';
   cameraMessage.textContent = 'Allow camera access when your browser asks.';
   try {
     if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
       throw new Error('Open this page through localhost or HTTPS to enable your camera.');
     }
     ensureAudio().catch(reportAudioError);
-    if(!stream?.getVideoTracks().some(track=>track.readyState==='live'))stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
-    video.srcObject = stream;
-    await video.play();
-    video.style.display = 'block'; placeholder.style.display = 'none';
-    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-    cameraMessage.textContent = 'Camera is on. Show both palms. Extend a finger to play its chord; curl it to stop.';
+    if(!stream?.getVideoTracks().some(track=>track.readyState==='live')){
+      try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'user'}},audio:false});}
+      catch(error){if(error.name!=='OverconstrainedError')throw error;stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});}
+      stream.getVideoTracks().forEach(track=>track.addEventListener('ended',()=>{
+        stopCameraSounds();video.style.display='none';placeholder.style.display='';
+        cameraButton.disabled=false;cameraButton.textContent='Restart camera';
+        cameraMessage.textContent='Camera access ended. Tap Restart camera to reconnect.';
+      },{once:true}));
+    }
+    cameraMessage.textContent='Camera allowed. Starting preview...';
+    await startCameraPreview(stream);previewReady=true;
+    cameraMessage.textContent='Camera is on. Loading hand tracking...';
     cameraButton.textContent = 'Camera enabled';
     const { FilesetResolver, HandLandmarker } = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14');
     const vision = await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
     const options={baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',delegate:'GPU'},runningMode:'VIDEO',numHands:2};
     try{landmarker=await HandLandmarker.createFromOptions(vision,options);}catch{options.baseOptions.delegate='CPU';landmarker=await HandLandmarker.createFromOptions(vision,options);}
-    lastVideoTime=-1;processFrame();
+    lastVideoTime=-1;
+    if(!trackingLoopStarted){trackingLoopStarted=true;processFrame();}
+    cameraMessage.textContent='Camera is on. Raise fingers steadily to play.';
   } catch (error) {
     console.error(error);
-    if (stream && video.readyState >= 2) {
+    if (previewReady) {
       cameraMessage.textContent = 'Camera is on, but tracking could not load. Check your connection and retry.';
       cameraButton.disabled=false;cameraButton.textContent='Retry hand tracking';
       return;
@@ -379,7 +403,7 @@ async function enableCamera() {
     video.style.display = 'none';
     placeholder.style.display = '';
     cameraButton.disabled = false; cameraButton.textContent = 'Try camera again';
-    cameraMessage.textContent = error.name === 'NotAllowedError' ? 'Camera permission was blocked. Allow camera access in your browser settings and try again.' : error.name === 'NotFoundError' ? 'No camera was found. Connect a camera and try again.' : error.name === 'NotReadableError' ? 'Close other apps using the camera and try again.' : error.message || 'Could not start the camera. Try again.';
+    cameraMessage.textContent = error.name === 'NotAllowedError' ? 'Camera permission was blocked. Allow camera access in your browser settings and try again.' : error.name === 'NotFoundError' ? 'No camera was found. Connect a camera and try again.' : error.name === 'NotReadableError' ? 'Camera is busy or unavailable. Close other camera apps, then try again.' : error.name === 'AbortError' ? 'Camera startup was interrupted. Tap Try camera again.' : error.message || 'Could not start the camera. Try again.';
   }
 }
 cameraButton.addEventListener('click', enableCamera);
