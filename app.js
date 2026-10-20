@@ -19,6 +19,38 @@ const familyMode = document.querySelector('#familyMode');
 const testFinger = document.querySelector('#testFinger');
 const chordName = document.querySelector('#chordName');
 const notePills = document.querySelector('#notePills');
+// Bind settings before initializing audio, meters or tracking.
+let dialogReturnFocus;
+function openAppDialog(dialog){
+  if(!dialog)return;
+  dialogReturnFocus=document.activeElement;
+  if(typeof dialog.showModal==='function'){
+    try{if(!dialog.open)dialog.showModal();return;}catch{}
+  }
+  dialog.setAttribute('open','');dialog.classList.add('dialog-fallback');
+  dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+  dialog.querySelector('button,select,input')?.focus();
+}
+function closeAppDialog(dialog){
+  if(!dialog)return;
+  if(typeof dialog.close==='function')dialog.close();
+  else {dialog.removeAttribute('open');if(dialog.id==='playbackDialog')document.querySelector('#recordingPlayer')?.pause();}
+  dialog.classList.remove('dialog-fallback');dialogReturnFocus?.focus?.();
+}
+const soundDialog=document.querySelector('#soundDialog');
+document.querySelector('#soundButton').addEventListener('click',()=>openAppDialog(soundDialog));
+document.querySelectorAll('[data-close-dialog]').forEach(button=>button.addEventListener('click',()=>closeAppDialog(document.getElementById(button.dataset.closeDialog))));
+document.addEventListener('keydown',event=>{
+  const dialog=document.querySelector('dialog.dialog-fallback[open]');if(!dialog)return;
+  if(event.key==='Escape'){event.preventDefault();closeAppDialog(dialog);return;}
+  if(event.key==='Tab'){
+    const items=[...dialog.querySelectorAll('button:not([disabled]),select,input,a[href]')];
+    if(!items.length)return;
+    const first=items[0],last=items[items.length-1];
+    if(event.shiftKey && document.activeElement===first){event.preventDefault();last.focus();}
+    else if(!event.shiftKey && document.activeElement===last){event.preventDefault();first.focus();}
+  }
+});
 let recordingDestination, instrumentBus, microphoneBus, mixBus, instrumentMeterNode, microphoneMeterNode, mixMeterNode, systemMeterNode, systemMeterMute;
 const instrumentSelect = document.querySelector('#instrumentSelect');
 const playStyle = document.querySelector('#playStyle');
@@ -402,7 +434,7 @@ const saveRecording = document.querySelector('#saveRecording');
 const recordingMode = document.querySelector('#recordingMode');
 const previewRecording = document.querySelector('#previewRecording');
 const playbackDialog = document.querySelector('#playbackDialog');
-previewRecording.addEventListener('click', () => playbackDialog.showModal());
+previewRecording.addEventListener('click', () => openAppDialog(playbackDialog));
 playbackDialog.addEventListener('close', () => recordingPlayer.pause());
 let recorder, recordingTimer, recordingUrl, captureStream, captureSource;
 const recordingHints = {
@@ -447,7 +479,7 @@ async function startRecording() {
   const mode = recordingMode.value;
   const withVideo = mode === 'camera';
   recordingPlayer.pause();
-  playbackDialog.close();
+  closeAppDialog(playbackDialog);
   recordingStatus.textContent = 'Preparing recording...';
   try {
     if (!window.MediaRecorder) throw new Error('Recording is unavailable in this browser. Try Chrome or Edge.');
@@ -564,6 +596,7 @@ const meterBuffers=new WeakMap();
 function readLevel(node){
   if(!node || audioContext?.state!=='running')return 0;
   let buffer=meterBuffers.get(node);if(!buffer){buffer=new Float32Array(node.fftSize);meterBuffers.set(node,buffer);}
+  if(typeof node.getFloatTimeDomainData!=='function')return 0;
   node.getFloatTimeDomainData(buffer);let peak=0;for(const sample of buffer)peak=Math.max(peak,Math.abs(sample));return peak;
 }
 function paintMeters(){
@@ -573,8 +606,7 @@ function paintMeters(){
 }
 paintMeters();
 
-const soundDialog=document.querySelector('#soundDialog');
-document.querySelector('#soundButton').addEventListener('click',()=>soundDialog.showModal());
+
 function updateSoundSummary(){document.querySelector('#soundSummary').textContent=instrumentSelect.options[instrumentSelect.selectedIndex].text+' / '+playStyle.options[playStyle.selectedIndex].text;}
 [instrumentSelect,playStyle].forEach(control=>control.addEventListener('change',updateSoundSummary));
 updateSoundSummary();

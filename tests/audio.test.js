@@ -5,7 +5,7 @@ const elements = new Map(), oscillators = [], intervals = new Map();
 let timerId = 0;
 const defaults = {familyKey:'0',familyMode:'major',testFinger:'0',instrumentSelect:'piano',playStyle:'chord',triggerMode:'hold',instrumentVolume:'80',microphoneVolume:'80',recordingMode:'mic',countdownSelect:'0'};
 function element(id) {
-  if (!elements.has(id)) elements.set(id, {value:defaults[id] || '', checked:false, disabled:false, selectedIndex:0, options:[{text:defaults[id] || ''}], classList:{toggle(){},remove(){}}, getContext:()=>({}), addEventListener(name,handler){this[name]=handler;}, replaceChildren(){}, setAttribute(name,value){this[name]=value;}, pause(){}, close(){}, showModal(){}});
+  if (!elements.has(id)) elements.set(id, {value:defaults[id] || '', checked:false, disabled:false, selectedIndex:0, options:[{text:defaults[id] || ''}], classList:{toggle(){},remove(){},add(){}}, getContext:()=>({}), addEventListener(name,handler){this[name]=handler;}, replaceChildren(){}, setAttribute(name,value){this[name]=value;},removeAttribute(name){delete this[name];},querySelector(){return null;}, pause(){}, close(){this.open=false;}, showModal(){this.open=true;}});
   return elements.get(id);
 }
 function param() {return {value:0,events:[],setValueAtTime(v,t){this.events.push(['set',v,t]);this.value=v;},exponentialRampToValueAtTime(v,t){this.events.push(['ramp',v,t]);},cancelScheduledValues(){},cancelAndHoldAtTime(){},setTargetAtTime(v){this.value=v;}};}
@@ -32,11 +32,14 @@ class RecorderMock {
 const micTrack={stop(){this.stopped=true;},addEventListener(){}};
 let fakeNow=10000;
 class FakeDate extends Date {static now(){return fakeNow;}}
-const sandbox={console,Float32Array,Blob,Date:FakeDate,MediaRecorder:RecorderMock,MediaStream:class{constructor(tracks){this.tracks=tracks;}},URL:{createObjectURL:()=> 'blob:test',revokeObjectURL(){}},navigator:{mediaDevices:{getUserMedia:async()=>({getTracks:()=>[micTrack],getAudioTracks:()=>[micTrack]})}},window:{AudioContext:AudioContextMock,MediaRecorder:RecorderMock,addEventListener(){}},requestAnimationFrame(){},setTimeout:()=>++timerId,clearTimeout(){},setInterval(fn){const id=++timerId;intervals.set(id,fn);return id;},clearInterval(id){intervals.delete(id);},document:{querySelector:s=>element(s.slice(1)),querySelectorAll:()=>[],createElement:()=>({}),createTextNode:()=>({})}};
+const sandbox={console,Float32Array,Blob,Date:FakeDate,MediaRecorder:RecorderMock,MediaStream:class{constructor(tracks){this.tracks=tracks;}},URL:{createObjectURL:()=> 'blob:test',revokeObjectURL(){}},navigator:{mediaDevices:{getUserMedia:async()=>({getTracks:()=>[micTrack],getAudioTracks:()=>[micTrack]})}},window:{AudioContext:AudioContextMock,MediaRecorder:RecorderMock,addEventListener(){}},requestAnimationFrame(){},setTimeout:()=>++timerId,clearTimeout(){},setInterval(fn){const id=++timerId;intervals.set(id,fn);return id;},clearInterval(id){intervals.delete(id);},document:{addEventListener(){},querySelector:s=>element(s.slice(1)),querySelectorAll:()=>[],createElement:()=>({}),createTextNode:()=>({})}};
 vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../app.js'),'utf8'),sandbox);
 const run = code => vm.runInContext(code,sandbox);
 (async()=>{
+  element('soundButton').click();assert.equal(element('soundDialog').open,true,'native settings must open');run('closeAppDialog(soundDialog)');
+  const nativeShow=element('soundDialog').showModal;delete element('soundDialog').showModal;
+  element('soundButton').click();assert.equal(element('soundDialog').open,'','fallback settings must open');run('closeAppDialog(soundDialog)');assert(!element('soundDialog').open);element('soundDialog').showModal=nativeShow;
   await run('ensureAudio()');
   assert.equal(run('instrumentBus.gain.value'),.8);
   assert(run('instrumentMeterNode.connections.includes(audioContext.destination)'));
