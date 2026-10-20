@@ -3,12 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#100d20">
+  <meta name="theme-color" content="#101827">
   <title>Gesture Chords</title>
-  <link rel="stylesheet" href="style.css?v=24">
+  <link rel="stylesheet" href="style.css?v=25">
 </head>
 <body>
-  <div class="enchanted-sky" aria-hidden="true"><div class="moon-orbit"></div><div class="sky-stars"></div></div>
   <main class="app-shell">
     <header class="topbar"><div class="brand-mark" aria-hidden="true">&#9834;</div><h1>Gesture Chords</h1><div class="audio-state" id="audioState" role="status" aria-live="polite"><span></span>Loading audio controls...</div></header>
     <section class="hero" aria-label="Gesture instrument">
@@ -16,7 +15,6 @@
         <h2>Your hands. Your chords.</h2>
         <div class="family-controls"><label for="familyKey">Chord family</label><select id="familyKey" aria-label="Family key"><option value="0">C</option><option value="1">C#</option><option value="2">D</option><option value="3">D#</option><option value="4">E</option><option value="5">F</option><option value="6">F#</option><option value="7">G</option><option value="8">G#</option><option value="9">A</option><option value="10">A#</option><option value="11">B</option></select><select id="familyMode" aria-label="Family scale"><option value="major">Major</option><option value="minor">Natural minor</option></select></div>
         <div class="camera-actions"><button class="primary-button" id="cameraButton">Enable camera</button><button class="record-button" id="soundButton" type="button">Sound &amp; mix</button></div>
-        <label class="magic-toggle"><input id="magicEffects" type="checkbox" checked>Magic effects</label>
         <p id="soundSummary" class="sound-summary">Piano / Chord</p>
         <p id="cameraMessage" class="camera-note">Raise steadily to play. Curl or remove hands to stop.</p>
         <section class="recording-panel" aria-label="Recording">
@@ -32,7 +30,7 @@
           <video id="video" autoplay playsinline muted></video><canvas id="overlay"></canvas>
           <div id="countdownOverlay" class="countdown-overlay" aria-live="assertive" hidden></div><div id="magicStage" class="magic-stage" aria-hidden="true"></div>
           <video id="recordingPreview" class="recording-preview" autoplay playsinline muted hidden aria-label="Recording camera preview"></video>
-          <div class="camera-placeholder" id="placeholder"><div class="hand-icon magic-sigil" aria-hidden="true">&#10022;</div><b>Your magic awaits</b><span>Raise your hands. Awaken a chord.</span></div>
+          <div class="camera-placeholder" id="placeholder"><div class="hand-icon" aria-hidden="true">&#9995;</div><b>Your stage is ready</b><span>Enable the camera to start</span></div>
           <div class="camera-badge" id="trackingBadge"><span></span>Waiting for hands</div>
         </div>
         <div class="note-display"><div><span class="eyebrow">Family chords</span><div class="chord-name" id="chordName">C major family</div></div><div class="note-pills" id="notePills"></div></div>
@@ -43,6 +41,7 @@
   </main>
   <dialog id="soundDialog" aria-labelledby="soundDialogTitle">
     <div class="dialog-header"><b id="soundDialogTitle">Sound &amp; mix</b><form method="dialog"><button class="record-button">Done</button></form></div>
+    <label class="magic-toggle"><input id="magicEffects" type="checkbox">Floating chord effects</label>
     <div class="sound-settings">
       <label for="instrumentSelect">Instrument<select id="instrumentSelect"><option value="piano">Piano</option><option value="guitar">Acoustic guitar</option><option value="organ">Organ</option><option value="synth">Synth</option></select></label>
       <label for="playStyle">Playing style<select id="playStyle"><option value="chord">Chord</option><option value="strum">Strum</option><option value="arpeggio">Arpeggio</option></select></label>
